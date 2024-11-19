@@ -6,9 +6,19 @@ from flask import redirect
 from flask import session
 from kgmodel import (Foresatt, Barn, Soknad, Barnehage)
 from kgcontroller import (form_to_object_soknad, insert_soknad, commit_all, select_alle_barnehager, select_alle_soknader)
+from kgcontroller import get_alle_kommuner, get_barnehage_statistikk
 
 app = Flask(__name__)
 app.secret_key = 'BAD_SECRET_KEY' # nødvendig for session
+
+@app.route('/statistikk', methods=['GET', 'POST'])
+def statistikk():
+    kommuner = get_alle_kommuner()
+    if request.method == 'POST':
+        valgt_kommune = request.form['kommune']
+        plot_url, statistikk_data = get_barnehage_statistikk(valgt_kommune)
+        return render_template('statistikk.html', kommuner=kommuner, plot_url=plot_url, statistikk=statistikk_data, valgt_kommune=valgt_kommune)
+    return render_template('statistikk.html', kommuner=kommuner)
 
 @app.route('/')
 def index():

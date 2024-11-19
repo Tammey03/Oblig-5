@@ -141,11 +141,12 @@ def select_alle_soknader():
 # ----- Persistent lagring ------
 def commit_all():
     """Skriver alle dataframes til excel"""
-    with pd.ExcelWriter('kgdata.xlsx', mode='a', if_sheet_exists='replace') as writer:  
+    with pd.ExcelWriter('kgdata.xlsx', mode='a', if_sheet_exists='replace') as writer:
         forelder.to_excel(writer, sheet_name='foresatt')
         barnehage.to_excel(writer, sheet_name='barnehage')
         barn.to_excel(writer, sheet_name='barn')
         soknad.to_excel(writer, sheet_name='soknad')
+        statistikk.to_excel(writer, sheet_name='statistikk')
         
 # --- Diverse hjelpefunksjoner ---
 def form_to_object_soknad(sd):
@@ -216,3 +217,60 @@ def test_df_to_object_list():
                              r['barnehage_antall_plasser'],
                              r['barnehage_ledige_plasser']),
          axis=1).to_list()[0].barnehage_navn == "Sunshine Preschool"
+    
+def add_statistikk_to_kgdata():
+    # lastet ned data Oblig 3
+    kgdata_no_meta = last_inn_og_rens_data("barnehagestats.xlsx", "KOSandel120000")
+    
+    # lastet det ned som "statistikk" sheet i kgdata.xlsx
+    with pd.ExcelWriter('kgdata.xlsx', mode='a', if_sheet_exists='replace') as writer:
+        kgdata_no_meta.to_excel(writer, sheet_name='statistikk', index=False)
+
+def last_inn_og_rens_data(filnavn, arknavn):
+    data = pd.read_excel(filnavn, sheet_name=arknavn,
+                           header=3,
+                           names=['kom','y15','y16','y17','y18','y19','y20','y21','y22','y23'],
+                           na_values=['.', '..'])
+    
+    for coln in ['y15','y16','y17','y18','y19','y20','y21','y22','y23']:
+        data.loc[data[coln] > 100, coln] = np.nan
+    
+    data.loc[724:779, 'kom'] = "NaN"
+    data["kom"] = data['kom'].str.split(" ").apply(lambda x: x[1] if len(x) > 1 else "")
+    
+    return data.drop(data.index[724:])
+
+# kjørte funksjonen en gang for å legge til statistikk sheet
+#add_statistikk_to_kgdata()
+import matplotlib.pyplot as plt
+import io
+import base64
+
+def get_alle_kommuner():
+    return sorted(statistikk['kom'].unique().tolist())
+
+def get_barnehage_statistikk(valgt_kommune):
+    kommune_data = statistikk[statistikk['kom'] == valgt_kommune].iloc[0]
+    år_kolonner = ['y15', 'y16', 'y17', 'y18', 'y19', 'y20', 'y21', 'y22', 'y23']
+    
+    # Generer grafer
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(2015, 2024), kommune_data[år_kolonner])
+    plt.title(f"Prosentandel barn 1-2 år i barnehage i {valgt_kommune}")
+    plt.xlabel("År")
+    plt.ylabel("Prosentandel")
+    plt.ylim(0, 100)
+    
+    
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plot_url = base64.b64encode(img.getvalue()).decode()
+    
+    # gjorde sånn at data som er nan% vises som "Not recorded"
+    statistikk_data = {
+        år: "Not recorded" if pd.isna(verdi) else verdi
+        for år, verdi in zip(range(2015, 2024), kommune_data[år_kolonner])
+    }
+    
+    return plot_url, statistikk_data
