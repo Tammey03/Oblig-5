@@ -43,8 +43,44 @@ def behandle():
 
 @app.route('/svar')
 def svar():
-    information = session['information']
-    return render_template('svar.html', data=information)
+    information = session.get('information')
+
+    if (information is not None):
+        priorities = information.get('liste_over_barnehager_prioritert_5')
+        barnehage_list = []
+        test = ""
+        message = ""
+        
+        if len(priorities) > 0:
+            
+            kgpr = priorities.split(',') # ['1','2']
+         
+            
+            for kgid in kgpr:
+                
+                barnehage_instans = select_barnehage_instans(int(kgid))
+                #if barnehage_instans == 1:
+                #test = barnehage_instans
+                if barnehage_instans is not None and barnehage_instans.barnehage_ledige_plasser != 0:
+                    barnehage_list.append(barnehage_instans)
+                    message = "TILBUD om plass"
+                else:
+                    barnehage_list.append(barnehage_instans)
+                    test = "Avslag, ikke ledig plass på barnehage ID " + kgid
+                    
+                
+        else:
+            message = "AVSLAG, ingen ledige plasser på valgte barnehagene"
+    else:
+        message = "Information"
+  
+
+        
+    return render_template('svar.html',
+                           data=information,
+                           kglist=barnehage_list,
+                           message=message,
+                           test=test)
 
 @app.route('/commit')
 def commit():
