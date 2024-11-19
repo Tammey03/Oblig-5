@@ -269,7 +269,7 @@ def get_barnehage_statistikk(valgt_kommune):
     
     # gjorde sånn at data som er nan% vises som "Not recorded"
     statistikk_data = {
-        år: "Not recorded" if pd.isna(verdi) else verdi
+        år: "Ingen relevant data" if pd.isna(verdi) else verdi
         for år, verdi in zip(range(2015, 2024), kommune_data[år_kolonner])
     }
     
