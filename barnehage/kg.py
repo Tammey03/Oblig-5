@@ -41,6 +41,13 @@ def behandle():
     else:
         return render_template('soknad.html')
 
+def select_barnehage_instans(barnehage_id):
+    information = select_alle_barnehager()
+    for barnehage in information:
+        if barnehage.barnehage_id == barnehage_id:
+            return barnehage
+    return None
+    
 @app.route('/svar')
 def svar():
     information = session.get('information')
