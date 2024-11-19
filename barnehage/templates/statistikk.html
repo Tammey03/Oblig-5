@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Barnehagestatistikk{% endblock %}
+
+{% block content %}
+<h1>Barnehagestatistikk</h1>
+<form method="POST">
+    <label for="kommune">Velg kommune:</label>
+    <select name="kommune" id="kommune">
+        {% for kommune in kommuner %}
+        <option value="{{ kommune }}">{{ kommune }}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Vis statistikk">
+</form>
+
+{% if plot_url %}
+<h2>Prosentandel barn 1-2 år i barnehage i {{ valgt_kommune }}</h2>
+<img src="data:image/png;base64,{{ plot_url }}" alt="Statistikk graf" class="center">
+<table>
+    <tr>
+        <th>År</th>
+        <th>Prosentandel</th>
+    </tr>
+    {% for år, prosent in statistikk.items() %}
+    <tr>
+        <td>{{ år }}</td>
+        <td>
+            {% if prosent == "Not recorded" %}
+                {{ prosent }}
+            {% else %}
+                {{ prosent|round(1) }}%
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% endblock %}
