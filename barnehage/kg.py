@@ -7,7 +7,7 @@ from flask import session
 from kgmodel import (Foresatt, Barn, Soknad, Barnehage)
 from kgcontroller import (form_to_object_soknad, insert_soknad, commit_all, select_alle_barnehager, select_alle_soknader)
 from kgcontroller import get_alle_kommuner, get_barnehage_statistikk
-
+from dbexcel import forelder, barnehage, barn, soknad
 app = Flask(__name__)
 app.secret_key = 'BAD_SECRET_KEY' # nødvendig for session
 
@@ -92,7 +92,18 @@ def svar():
 @app.route('/commit')
 def commit():
     commit_all()
-    return render_template('commit.html')
+    
+    # Les all data fra kgdata.xlsx
+    forelder_data = forelder.to_dict(orient='records')
+    barnehage_data = barnehage.to_dict(orient='records')
+    barn_data = barn.to_dict(orient='records')
+    soknad_data = soknad.to_dict(orient='records')
+    
+    return render_template('commit.html', 
+                           forelder=forelder_data, 
+                           barnehage=barnehage_data, 
+                           barn=barn_data, 
+                           soknad=soknad_data)
 
 @app.route('/soknader')
 def soknader():
